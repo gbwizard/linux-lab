@@ -44,7 +44,7 @@ if [ "$CMD" = "$CMD_START" ]; then
 
     ip link add $VETH1 type veth peer $VETH2 netns $NETNS
     [ "$?" == 0 ] || { msg_fail "Failed to create $VETH1/$VETH2 pair to default<->$NETNS namespaces. Bailout"; exit 1; }
-    msg_ok "$VETH1/$VETH2 veth-pair created successfully" 
+    msg_ok "$VETH1/$VETH2 veth-pair created successfully"
 
     ip addr add $VETH1_ADDR dev $VETH1
     [ "$?" == 0 ] || { msg_fail "Failed to add address $VETH1_ADDR to ::$VETH1. Bailout"; exit 1; }
@@ -74,24 +74,19 @@ if [ "$CMD" = "$CMD_START" ]; then
     [ "$?" == 0 ] || { msg_fail "Failed to start pppoe-server. Bailout"; exit 1; }
     msg_ok "Started pppoe-server successfully"
 elif [ "$CMD" = "$CMD_STOP" ]; then
-    pkill pppoe-server
-    [ "$?" == 0 ] || { msg_fail "Failed to kill pppoe-server. Bailout"; exit 1; }
-    msg_ok "Stopped pppoe-server successfully"
-
     ip netns exec $NETNS ip route del $VETH_SUBNET dev $VETH2
-    [ "$?" == 0 ] || { msg_fail "Failed to del route $NETNS::$VETH_SUBNET. Bailout"; exit 1; }
-    msg_ok "Removed route $NETNS::$VETH_SUBNET successfully"
+    [ "$?" == 0 ] && msg_ok "Removed route $NETNS::$VETH_SUBNET successfully" || msg_fail "Failed to del route $NETNS::$VETH_SUBNET. Bailout"
 
     ip route del $VETH_SUBNET dev $VETH1
-    [ "$?" == 0 ] || { msg_fail "Failed to del route ::$VETH_SUBNET. Bailout"; exit 1; }
-    msg_ok "Removed route ::$VETH_SUBNET successfully"
+    [ "$?" == 0 ] && msg_ok "Removed route ::$VETH_SUBNET successfully" || msg_fail "Failed to del route ::$VETH_SUBNET. Bailout"
 
     ip netns exec $NETNS ip link del $VETH2
-    [ "$?" == 0 ] || { msg_fail "Failed to del link $NETNS::$VETH2. Bailout"; exit 1; }
-    msg_ok "Removed link $NETNS::$VETH2 successfully"
+    [ "$?" == 0 ] && msg_ok "Removed link $NETNS::$VETH2 successfully" || msg_fail "Failed to del link $NETNS::$VETH2. Bailout"
 
     ip netns del $NETNS
-    [ "$?" == 0 ] || { msg_fail "Failed to del netns $NETNS. Bailout"; exit 1; }
-    msg_ok "Removed netns $NETNS successfully"
+    [ "$?" == 0 ] && msg_ok "Removed netns $NETNS successfully" || msg_fail "Failed to del netns $NETNS. Bailout"
+
+    pkill pppoe-server
+    [ "$?" == 0 ] && msg_ok "Stopped pppoe-server successfully" || msg_fail "Failed to kill pppoe-server. Bailout"
 fi
 
